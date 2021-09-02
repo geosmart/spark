@@ -16,253 +16,376 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.apache.spark</groupId>
-    <artifactId>spark-parent_2.11</artifactId>
-    <version>2.4.8</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-parent_2.11</artifactId>
+        <version>2.4.8</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-  <artifactId>spark-assembly_2.11</artifactId>
-  <name>Spark Project Assembly</name>
-  <url>http://spark.apache.org/</url>
-  <packaging>pom</packaging>
+    <artifactId>spark-assembly_2.11</artifactId>
+    <name>Spark Project Assembly</name>
+    <url>http://spark.apache.org/</url>
+    <packaging>pom</packaging>
 
-  <properties>
-    <sbt.project.name>assembly</sbt.project.name>
-    <build.testJarPhase>none</build.testJarPhase>
-    <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
-  </properties>
+    <properties>
+        <sbt.project.name>assembly</sbt.project.name>
+        <build.testJarPhase>none</build.testJarPhase>
+        <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
 
-  <dependencies>
-    <!-- Prevent our dummy JAR from being included in Spark distributions or uploaded to YARN -->
-    <dependency>
-      <groupId>org.spark-project.spark</groupId>
-      <artifactId>unused</artifactId>
-      <version>1.0.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-graphx_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-repl_${scala.binary.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+        <mysql-connector.version>5.1.49</mysql-connector.version>
+        <ojdbc8.version>19.3.0.0</ojdbc8.version>
+        <spark-cassandra.version>2.4.3</spark-cassandra.version>
+        <spark-redis.version>2.4.2</spark-redis.version>
+        <spark-elasticsearch.version>2.4.5</spark-elasticsearch.version>
+    </properties>
 
-    <!--
-      Because we don't shade dependencies anymore, we need to restore Guava to compile scope so
-      that the libraries Spark depend on have it available. We'll package the version that Spark
-      uses (14.0.1) which is not the same as Hadoop dependencies, but works.
-    -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <scope>${hadoop.deps.scope}</scope>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-      <!-- zip pyspark archives to run python application on yarn mode -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <executions>
-            <execution>
-              <phase>package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <target>
-              <delete file="${basedir}/../python/lib/pyspark.zip"/>
-              <zip destfile="${basedir}/../python/lib/pyspark.zip">
-                <fileset dir="${basedir}/../python/" includes="pyspark/**/*"/>
-              </zip>
-            </target>
-          </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <profiles>
-    <profile>
-      <id>yarn</id>
-      <dependencies>
+    <dependencies>
+        <!-- Prevent our dummy JAR from being included in Spark distributions or uploaded to YARN -->
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-yarn_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.spark-project.spark</groupId>
+            <artifactId>unused</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
         </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>mesos</id>
-      <dependencies>
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-mesos_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>kubernetes</id>
-      <dependencies>
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-kubernetes_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>hive</id>
-      <dependencies>
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-hive_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>hive-thriftserver</id>
-      <dependencies>
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>spark-ganglia-lgpl</id>
-      <dependencies>
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-ganglia-lgpl_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>bigtop-dist</id>
-      <!-- This profile uses the assembly plugin to create a special "dist" package for BigTop
-           that contains Spark but not the Hadoop JARs it depends on. -->
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <version>3.1.0</version>
-            <executions>
-              <execution>
-                <id>dist</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>single</goal>
-                </goals>
-                <configuration>
-                  <descriptors>
-                    <descriptor>src/main/assembly/assembly.xml</descriptor>
-                  </descriptors>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <!-- Profiles that disable inclusion of certain dependencies. -->
-    <profile>
-      <id>hadoop-provided</id>
-      <properties>
-        <hadoop.deps.scope>provided</hadoop.deps.scope>
-      </properties>
-    </profile>
-    <profile>
-      <id>hive-provided</id>
-      <properties>
-        <hive.deps.scope>provided</hive.deps.scope>
-      </properties>
-    </profile>
-    <profile>
-      <id>orc-provided</id>
-      <properties>
-        <orc.deps.scope>provided</orc.deps.scope>
-      </properties>
-    </profile>
-    <profile>
-      <id>parquet-provided</id>
-      <properties>
-        <parquet.deps.scope>provided</parquet.deps.scope>
-      </properties>
-    </profile>
-
-    <!--
-     Pull in spark-hadoop-cloud and its associated JARs,
-    -->
-    <profile>
-      <id>hadoop-cloud</id>
-      <dependencies>
         <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-hadoop-cloud_${scala.binary.version}</artifactId>
-          <version>${project.version}</version>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-repl_${scala.binary.version}</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <!--
-        Redeclare this dependency to force it into the distribution.
+          Because we don't shade dependencies anymore, we need to restore Guava to compile scope so
+          that the libraries Spark depend on have it available. We'll package the version that Spark
+          uses (14.0.1) which is not the same as Hadoop dependencies, but works.
         -->
         <dependency>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-util</artifactId>
-          <scope>${hadoop.deps.scope}</scope>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>${hadoop.deps.scope}</scope>
         </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- zip pyspark archives to run python application on yarn mode -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <target>
+                        <delete file="${basedir}/../python/lib/pyspark.zip"/>
+                        <zip destfile="${basedir}/../python/lib/pyspark.zip">
+                            <fileset dir="${basedir}/../python/" includes="pyspark/**/*"/>
+                        </zip>
+                    </target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>yarn</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-yarn_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>mesos</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-mesos_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>kubernetes</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-kubernetes_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hive</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>hive-thriftserver</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive-thriftserver_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>spark-ganglia-lgpl</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-ganglia-lgpl_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>bigtop-dist</id>
+            <!-- This profile uses the assembly plugin to create a special "dist" package for BigTop
+                 that contains Spark but not the Hadoop JARs it depends on. -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>dist</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Profiles that disable inclusion of certain dependencies. -->
+        <profile>
+            <id>hadoop-provided</id>
+            <properties>
+                <hadoop.deps.scope>provided</hadoop.deps.scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>hive-provided</id>
+            <properties>
+                <hive.deps.scope>provided</hive.deps.scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>orc-provided</id>
+            <properties>
+                <orc.deps.scope>provided</orc.deps.scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>parquet-provided</id>
+            <properties>
+                <parquet.deps.scope>provided</parquet.deps.scope>
+            </properties>
+        </profile>
+
+        <!--
+         Pull in spark-hadoop-cloud and its associated JARs,
+        -->
+        <profile>
+            <id>hadoop-cloud</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hadoop-cloud_${scala.binary.version}</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <!--
+                Redeclare this dependency to force it into the distribution.
+                -->
+                <dependency>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-util</artifactId>
+                    <scope>${hadoop.deps.scope}</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>external-jars</id>
+            <dependencies>
+                <dependency>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
+                    <version>${mysql-connector.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.oracle.database.jdbc</groupId>
+                    <artifactId>ojdbc8</artifactId>
+                    <version>${ojdbc8.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.datastax.spark</groupId>
+                    <artifactId>spark-cassandra-connector_${scala.binary.version}</artifactId>
+                    <version>${spark-cassandra.version}</version>
+                    <scope>compile</scope>
+                    <exclusions>
+                        <exclusion>
+                            <artifactId>joda-time</artifactId>
+                            <groupId>joda-time</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>netty-all</artifactId>
+                            <groupId>io.netty</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>scala-library</artifactId>
+                            <groupId>org.scala-lang</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>scala-reflect</artifactId>
+                            <groupId>org.scala-lang</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>commons-beanutils</artifactId>
+                            <groupId>commons-beanutils</groupId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.redislabs</groupId>
+                    <artifactId>spark-redis_${scala.binary.version}</artifactId>
+                    <version>${spark-redis.version}</version>
+                    <scope>compile</scope>
+                    <exclusions>
+                        <exclusion>
+                            <artifactId>scala-compiler</artifactId>
+                            <groupId>org.scala-lang</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>scala-library</artifactId>
+                            <groupId>org.scala-lang</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>slf4j-api</artifactId>
+                            <groupId>org.slf4j</groupId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch-spark_${scala.binary.version}</artifactId>
+                    <version>${spark-elasticsearch.version}</version>
+                    <scope>compile</scope>
+                    <exclusions>
+                        <exclusion>
+                            <artifactId>spark-sql_2.11</artifactId>
+                            <groupId>org.apache.spark</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>scala-library</artifactId>
+                            <groupId>org.scala-lang</groupId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-aws</artifactId>
+                    <scope>compile</scope>
+                    <exclusions>
+                        <exclusion>
+                            <artifactId>hadoop-common</artifactId>
+                            <groupId>org.apache.hadoop</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>joda-time</artifactId>
+                            <groupId>joda-time</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>jackson-databind</artifactId>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>jackson-core</artifactId>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>jackson-annotations</artifactId>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>commons-logging</artifactId>
+                            <groupId>commons-logging</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <artifactId>httpclient</artifactId>
+                            <groupId>org.apache.httpcomponents</groupId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>
